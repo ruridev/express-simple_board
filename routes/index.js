@@ -12,7 +12,19 @@ var pool = pg.Pool({
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  pool.connect(function(err, client) {
+    if (err) {
+      console.log(err);
+    } else {
+      client.query(
+        'SELECT id, title, body, writer, hit_count, created_at, updated_at, parent_id, sort_key FROM posts',
+        function(err, result) {
+          res.render('index', { posts: result.rows });
+        },
+      );
+    }
+  });
 });
+
 
 module.exports = router;
