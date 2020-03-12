@@ -24,3 +24,11 @@
    (10.6ms)  CREATE  INDEX  "index_post_comments_on_post_id" ON "post_comments"  ("post_id")
    -> 0.0384s
 ```
+
+# 참고
+[Node.js에서 exports와 mudule.exports의 차이](http://happinessoncode.com/2018/05/20/nodejs-exports-and-module-exports/)
+
+- module.exports는 개별 함수가 아닌 객체를 통째로 exports 하는 경우에 사용
+- Node.js에서 익스포트되는 객체는 module.exports이다.
+- module.exports 빈 오브젝트({})로 초기화되어 있다.
+- exports는 module.exports를 참조하는 변수이다.
