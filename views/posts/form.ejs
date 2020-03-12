@@ -23,28 +23,22 @@
       <% if(post) {%>
       <div>
         <label for="writer">작성자</label><br />
-        <%= post.writer%>
+        <%= post.writer %>
       </div>
       <div>
         <label for="password">작성시 입력한 비밀번호</label><br />
         <input type="password" id="password" name="password" required="true" value="" />
       </div>
-      <%}else{%>
+      <% } else { %>
       <div>
         <label for="writer">작성자</label><br />
-        <input
-          type="text"
-          id="writer"
-          name="writer"
-          required="true"
-          value="<%= post ? post.writer : '' %>"
-        />
+        <input type="text" id="writer" name="writer" value="" required="true" />
       </div>
       <div>
         <label for="password">비밀번호</label><br />
-        <input type="password" id="password" name="password" required="true" value="" />
+        <input type="password" id="password" name="password" value="" required="true" />
       </div>
-      <%}%>
+      <% } %>
       <div>
         <label for="body">내용</label><br />
         <textarea name="body" required="true"><%= post ? post.body : '' %></textarea>
