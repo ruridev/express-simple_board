@@ -8,7 +8,7 @@
 <body>
   <a href="/posts">리스트로 돌아가기</a>
   <h1>삭제</h1>
-  <form method="DELETE" action="/posts/<%= post_id %>">
+  <form method="post" action="/posts/<%= post_id %>/delete">
     <div>
       <label for="password">비밀번호</label>
       <input type="password" id="password" name="password" />

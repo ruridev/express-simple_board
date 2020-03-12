@@ -5,16 +5,23 @@
   </head>
   <body>
     <a href="/posts/new">작성하기</a>
-    <table border="1">
+    <table border="0">
     <% posts.forEach(function (post, _) { %>
+      <% if(post.status == 0){ %>
       <tr>
         <td><%= post.id %></td>
         <td><a href="/posts/<%= post.id%>"><%= post.title %></a></td>
         <td><%= post.writer %></td>
-        <td><%= post.hitcount %></td>
+        <td>hit count: <%= post.hitcount %></td>
+        <td>parent_id: <%= post.parent_id %></td>
+        <td>sort_key: <%= post.sort_key %></td>
         <td><%= post.created_at %></td>
       </tr>
-    <% }); %>
+    <% } else { %>
+      <tr>
+        <td colspan="7">삭제된 게시글</td>
+      </tr>
+    <% }}); %>
     </table>
   </body>
 </html>

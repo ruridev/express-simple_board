@@ -8,7 +8,7 @@
     <a href="/posts/<%= post.id %>/edit">수정하기</a>
     <a href="/posts/<%= post.id %>/delete">삭제하기</a>
     <a href="/posts/<%= post.id %>/reply">답글달기</a>
-    <table border="1">
+    <table border="0">
       <tr>
         <td><%= post.id %></td>
         <td><%= post.title %></td>
@@ -18,14 +18,15 @@
         <td><%= post.created_at %></td>
       </tr>
     </table>
-    <table border="1">
+    <table border="0">
       <% comments.forEach(function (comment, _) { %>
       <tr>
         <td><%= comment.id %></td>
-        <td><%= comment.title %><a href="/comments/<%= comment.id%>"></a></td>
         <td><%= comment.writer %></td>
+        <td><%= comment.body %></td>
         <td><%= comment.created_at %></td>
-        <td><a href="/comments/<%= comment.id %>/edit">수정하기</a></td>
+        <td><a href="/comments/<%= comment.id %>/edit">수정</a></td>
+        <td><a href="/comments/<%= comment.id %>/delete">삭제</a></td>
       </tr>
       <% }); %>
     </table>

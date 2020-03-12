@@ -6,10 +6,9 @@
 </head>
 
 <body>
-  <a href="/posts/<%= comment.post_id%>">글로 돌아가기</a>
+  <a href="/comments/<%= comment.comment_id%>">글로 돌아가기</a>
   <h1>수정</h1>
-  <form method="comment" action="/comments">
-    <input type="hidden" name="post_id" value="<%= comment.post_id %>" />
+  <form method="post" action="/comments/<%= comment.id%>">
     <div>
       <label for="writer">작성자</label>
       <input type="text" id="writer" name="writer" value="<%= comment.writer %>" />
