@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <%- include('../include/_head', {title: ''}) %> <% var form = (post == null) ? { action: '/posts',
+  title: '게시물 작성', submit: '작성'} : { action: '/posts/'+post.id, title: '게시물 수정', submit:
+  '수정'}; %>
+  <body>
+    <a href="/posts">리스트로 돌아가기</a>
+    <h1><%= form.title %></h1>
+    <form method="post" action="<%= form.action%>">
+      <% if(parent_post) { %>
+      <input type="hidden" name="parent_id" value="<%= parent_post.id %>" />
+      <h3>(id: <%= parent_post.id%>) <%= parent_post.title%> 게시글에 대한 답글입니다. <% }%></h3>
+      <div>
+        <label for="title">제목</label><br />
+        <input
+          type="text"
+          id="title"
+          name="title"
+          required="true"
+          value="<%= post ? post.title : '' %>"
+        />
+      </div>
+      <% if(post) {%>
+      <div>
+        <label for="writer">작성자</label><br />
+        <%= post.writer%>
+      </div>
+      <div>
+        <label for="password">작성시 입력한 비밀번호</label><br />
+        <input type="password" id="password" name="password" required="true" value="" />
+      </div>
+      <%}else{%>
+      <div>
+        <label for="writer">작성자</label><br />
+        <input
+          type="text"
+          id="writer"
+          name="writer"
+          required="true"
+          value="<%= post ? post.writer : '' %>"
+        />
+      </div>
+      <div>
+        <label for="password">비밀번호</label><br />
+        <input type="password" id="password" name="password" required="true" value="" />
+      </div>
+      <%}%>
+      <div>
+        <label for="body">내용</label><br />
+        <textarea name="body" required="true"><%= post ? post.body : '' %></textarea>
+      </div>
+      <div>
+        <input type="submit" value="<%= form.submit %>" />
+      </div>
+    </form>
+  </body>
+</html>

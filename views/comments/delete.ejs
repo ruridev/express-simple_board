@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  index
-</head>
-
-<body>
-  <h1>삭제</h1>
-  <form method="POST" action="/comments/<%= comment_id %>/delete">
-    <div>
-      <label for="password">비밀번호</label>
-      <input type="password" id="password" name="password" />
-    </div>
-    <div>
-      <input type="submit" value="삭제"" />
-    </div>
-  </form>
-</body>
-
+  <%- include('../include/_head', {title: ''}) %>
+  <body>
+    <h1>삭제</h1>
+    <form method="post" action="/comments/<%= comment_id %>/delete">
+      <div>
+        <label for="password">작성 시 입력한 비밀번호를 입력해주세요.</label><br />
+        <input type="password" id="password" name="password" required="true" />
+      </div>
+      <div>
+        <input type="submit" value="삭제"" />
+      </div>
+    </form>
+  </body>
 </html>

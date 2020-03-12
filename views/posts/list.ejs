@@ -1,27 +1,36 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    index
-  </head>
+  <%- include('../include/_head', {title: ''}) %>
   <body>
     <a href="/posts/new">작성하기</a>
-    <table border="0">
-    <% posts.forEach(function (post, _) { %>
-      <% if(post.status == 0){ %>
+    <table border="1">
+      <tr>
+        <th>id</th>
+        <th>제목</th>
+        <th>작성자</th>
+        <th>조회수</th>
+        <th>parent_id</th>
+        <th>작성일자</th>
+      </tr>
+      <% posts.forEach(function (post, _) { %> <% if(post.status == 0){ %>
       <tr>
         <td><%= post.id %></td>
         <td><a href="/posts/<%= post.id%>"><%= post.title %></a></td>
         <td><%= post.writer %></td>
-        <td>hit count: <%= post.hitcount %></td>
-        <td>parent_id: <%= post.parent_id %></td>
-        <td>sort_key: <%= post.sort_key %></td>
+        <td><%= post.hit_count %></td>
+        <td><%= post.parent_id %></td>
         <td><%= post.created_at %></td>
       </tr>
-    <% } else { %>
+      <% } else { %>
       <tr>
-        <td colspan="7">삭제된 게시글</td>
+        <td><%= post.id %></td>
+        <td>삭제된 게시글입니다.</td>
+        <td><%= post.writer %></td>
+        <td><%= post.hit_count %></td>
+        <td><%= post.parent_id %></td>
+        <td><%= post.created_at %></td>
       </tr>
-    <% }}); %>
+      <% }}); %>
     </table>
   </body>
 </html>
