@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    index
+  </head>
+  <body>
+    <a href="/posts/new">작성하기</a>
+    <table border="1">
+    <% posts.forEach(function (post, _) { %>
+      <tr>
+        <td><%= post.id %></td>
+        <td><a href="/posts/<%= post.id%>"><%= post.title %></a></td>
+        <td><%= post.writer %></td>
+        <td><%= post.hitcount %></td>
+        <td><%= post.created_at %></td>
+      </tr>
+    <% }); %>
+    </table>
+  </body>
+</html>

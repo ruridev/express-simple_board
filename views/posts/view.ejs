@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    index
+  </head>
+  <body>
+    <a href="/posts">리스트로 돌아가기</a>
+    <a href="/posts/<%= post.id %>/edit">수정하기</a>
+    <a href="/posts/<%= post.id %>/delete">삭제하기</a>
+    <a href="/posts/<%= post.id %>/reply">답글달기</a>
+    <table border="1">
+      <tr>
+        <td><%= post.id %></td>
+        <td><%= post.title %></td>
+        <td><%= post.body %></td>
+        <td><%= post.writer %></td>
+        <td><%= post.hitcount %></td>
+        <td><%= post.created_at %></td>
+      </tr>
+    </table>
+    <table border="1">
+      <% comments.forEach(function (comment, _) { %>
+      <tr>
+        <td><%= comment.id %></td>
+        <td><%= comment.title %><a href="/comments/<%= comment.id%>"></a></td>
+        <td><%= comment.writer %></td>
+        <td><%= comment.created_at %></td>
+        <td><a href="/comments/<%= comment.id %>/edit">수정하기</a></td>
+      </tr>
+      <% }); %>
+    </table>
+    <h1>코멘트 등록</h1>
+    <form method="POST" action="/posts/<%= post.id%>/comments">
+      <div>
+        <label for="writer">작성자</label>
+        <input type="text" id="writer" name="writer" />
+      </div>
+      <div>
+        <label for="body">내용</label>
+        <textarea name="body"></textarea>
+      </div>
+      <div>
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" />
+      </div>
+      <div>
+        <input type="submit" value="작성"" />
+      </div>
+    </form>
+  </body>
+</html>
