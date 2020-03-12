@@ -2,14 +2,15 @@ var express = require('express');
 var router = express.Router();
 var db = require('../models/database');
 const { check, validationResult } = require('express-validator/check');
+var md5 = require('blueimp-md5');
 
 /* GET posts listing. */
 router.get('/', function(req, res, next) {
   db.connect(function(err, client) {
-    try {
-      if (err) {
-        console.log(err);
-      } else {
+    if (err) {
+      console.log(err);
+    } else {
+      try {
         client.query(
           "SELECT id, title, body, writer, hit_count, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at , parent_id, sort_key, status FROM posts order by sort_key, sort_key||id",
           function(err, result) {
@@ -19,10 +20,10 @@ router.get('/', function(req, res, next) {
             });
           },
         );
+      } finally {
+        console.log('커넥션 풀 반환');
+        client.release();
       }
-    } finally {
-      console.log('커넥션 풀 반환');
-      client.release();
     }
   });
 });
@@ -55,10 +56,10 @@ SELECT * FROM r_posts';
 /* GET post */
 router.get('/:id', function(req, res, next) {
   db.connect(function(err, client) {
-    try {
-      if (err) {
-        console.log(err);
-      } else {
+    if (err) {
+      console.log(err);
+    } else {
+      try {
         client.query(
           "SELECT id, title, body, writer, hit_count, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at , parent_id, sort_key, status FROM posts WHERE id = $1",
           [req.params.id],
@@ -83,10 +84,10 @@ router.get('/:id', function(req, res, next) {
             );
           },
         );
+      } finally {
+        console.log('커넥션 풀 반환');
+        client.release();
       }
-    } finally {
-      console.log('커넥션 풀 반환');
-      client.release();
     }
   });
 });
@@ -126,11 +127,11 @@ router.post(
     }
 
     db.connect(function(err, client) {
-      try {
-        if (err) {
-          console.log(err);
-        } else {
-          const parent_id = req.body.parent_id != undefined ? req.body.parent_id : 0;
+      if (err) {
+        console.log(err);
+      } else {
+        const parent_id = req.body.parent_id != undefined ? req.body.parent_id : 0;
+        try {
           client.query(
             "SELECT sort_key||LPAD(to_hex(id), 10, '0') as sort_key from posts where id = $1",
             [parent_id],
@@ -141,7 +142,7 @@ router.post(
                   req.body.writer,
                   req.body.title,
                   req.body.body,
-                  req.body.password,
+                  md5(req.body.password),
                   result0.rows.length > 0
                     ? result0.rows[0].sort_key
                     : parent_id.toString(16).padStart(10, '0'),
@@ -156,10 +157,10 @@ router.post(
               );
             },
           );
+        } finally {
+          console.log('커넥션 풀 반환');
+          client.release();
         }
-      } finally {
-        console.log('커넥션 풀 반환');
-        client.release();
       }
     });
   },
@@ -188,23 +189,27 @@ router.post(
     }
 
     db.connect(function(err, client) {
-      try {
-        if (err) {
-          console.log(err);
-        } else {
+      if (err) {
+        console.log(err);
+      } else {
+        try {
           client.query(
-            'update posts set title = $1, body = $2, updated_at = $3 where id = $4 RETURNING *',
-            [req.body.title, req.body.body, new Date(), req.params.id],
+            'update posts set title = $1, body = $2, updated_at = $3 where id = $4 and encrypted_password = $5 RETURNING *',
+            [req.body.title, req.body.body, new Date(), req.params.id, md5(req.body.password)],
             function(err, result) {
               console.log(result);
               if (err) console.log(err);
-              res.status(302).redirect('/posts/' + result.rows[0].id);
+              if (result && result.rows.length == 1) {
+                res.status(302).redirect('/posts/' + result.rows[0].id);
+              } else {
+                res.render('400');
+              }
             },
           );
+        } finally {
+          console.log('커넥션 풀 반환');
+          client.release();
         }
-      } finally {
-        console.log('커넥션 풀 반환');
-        client.release();
       }
     });
   },
@@ -213,23 +218,29 @@ router.post(
 /* GET posts listing. */
 router.post('/:id/delete', function(req, res, next) {
   db.connect(function(err, client) {
-    try {
-      if (err) {
-        console.log(err);
-      } else {
-        if (err) console.log(err);
+    if (err) {
+      console.log(err);
+    } else {
+      if (err) console.log(err);
+
+      try {
         client.query(
-          'update posts set status = 1, updated_at = $2 where id = $1',
-          [req.params.id, new Date()],
+          'update posts set status = 1, updated_at = $2 where id = $1 and encrypted_password = $3',
+          [req.params.id, new Date(), md5(req.body.password)],
           function(err, result) {
             if (err) console.log(err);
-            res.status(302).redirect('/posts');
+            console.log(result);
+            if (result && result.rowCount == 1) {
+              res.status(302).redirect('/posts');
+            } else {
+              res.render('400');
+            }
           },
         );
+      } finally {
+        console.log('커넥션 풀 반환');
+        client.release();
       }
-    } finally {
-      console.log('커넥션 풀 반환');
-      client.release();
     }
   });
 });
@@ -237,10 +248,10 @@ router.post('/:id/delete', function(req, res, next) {
 /* GET post */
 router.get('/:id/edit', function(req, res, next) {
   db.connect(function(err, client) {
-    try {
-      if (err) {
-        console.log(err);
-      } else {
+    if (err) {
+      console.log(err);
+    } else {
+      try {
         client.query(
           'SELECT id, title, body, writer, hit_count, parent_id, sort_key, status FROM posts WHERE id = $1',
           [req.params.id],
@@ -252,10 +263,10 @@ router.get('/:id/edit', function(req, res, next) {
             });
           },
         );
+      } finally {
+        console.log('커넥션 풀 반환');
+        client.release();
       }
-    } finally {
-      console.log('커넥션 풀 반환');
-      client.release();
     }
   });
 });
@@ -270,10 +281,10 @@ router.get('/:id/delete', function(req, res, next) {
 /* GET post */
 router.get('/:id/reply', function(req, res, next) {
   db.connect(function(err, client) {
-    try {
-      if (err) {
-        console.log(err);
-      } else {
+    if (err) {
+      console.log(err);
+    } else {
+      try {
         client.query(
           "SELECT id, title, body, writer, hit_count, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at,  parent_id, sort_key, status FROM posts WHERE id = $1",
           [req.params.id],
@@ -285,10 +296,10 @@ router.get('/:id/reply', function(req, res, next) {
             });
           },
         );
+      } finally {
+        console.log('커넥션 풀 반환');
+        client.release();
       }
-    } finally {
-      console.log('커넥션 풀 반환');
-      client.release();
     }
   });
 });
@@ -320,17 +331,17 @@ router.post(
       return res.render('422');
     }
     db.connect(function(err, client) {
-      try {
-        if (err) {
-          console.log(err);
-        } else {
+      if (err) {
+        console.log(err);
+      } else {
+        try {
           client.query(
             'Insert INTO post_comments(post_id, writer, body, encrypted_password, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6)',
             [
               req.params.post_id,
               req.body.writer,
               req.body.body,
-              req.body.password,
+              md5(req.body.password),
               new Date(),
               new Date(),
             ],
@@ -339,10 +350,10 @@ router.post(
               res.status(302).redirect('/posts/' + req.params.post_id);
             },
           );
+        } finally {
+          console.log('커넥션 풀 반환');
+          client.release();
         }
-      } finally {
-        console.log('커넥션 풀 반환');
-        client.release();
       }
     });
   },
