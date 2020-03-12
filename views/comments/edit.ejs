@@ -1,31 +1,24 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  index
-</head>
-
-<body>
-  <a href="/comments/<%= comment.comment_id%>">글로 돌아가기</a>
-  <h1>수정</h1>
-  <form method="post" action="/comments/<%= comment.id%>">
-    <div>
-      <label for="writer">작성자</label>
-      <input type="text" id="writer" name="writer" value="<%= comment.writer %>" />
-    </div>
-    <div>
-      <label for="body">내용</label>
-      <textarea name="body"><%= comment.body %></textarea>
-    </div>
-    <div>
-      <label for="password">비밀번호</label>
-      <small>작성 시 입력한 비밀번호를 입력해주세요.</small>
-      <input type="password" id="password" name="password" />
-    </div>
-    <div>
-      <input type="submit" value="수정"" />
-    </div>
-  </form>
-</body>
-
+  <%- include('../include/_head', {title: ''}) %>
+  <body>
+    <a href="/posts/<%= comment.post_id%>">글로 돌아가기</a>
+    <h1>수정</h1>
+    <form method="post" action="/comments/<%= comment.id%>">
+      <div>
+        작성자: <%= comment.writer %>
+      </div>
+      <div>
+        <label for="body">내용</label><br />
+        <textarea name="body" required="true"><%= comment.body %></textarea>
+      </div>
+      <div>
+        <label for="password">작성 시 입력한 비밀번호를 입력해주세요.</label><br />
+        <input type="password" id="password" name="password" required="true" />
+      </div>
+      <div>
+        <input type="submit" value="수정"" />
+      </div>
+    </form>
+  </body>
 </html>
