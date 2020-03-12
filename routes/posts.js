@@ -63,6 +63,12 @@ router.get('/:id', function(req, res, next) {
           [req.params.id],
           function(err, result) {
             if (err) console.log(err);
+            if (result == undefined) {
+              return res.render('404');
+            }
+            if (result.rows.length == 0) {
+              return res.render('404');
+            }
             client.query(
               "SELECT id, post_id, body, writer, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at , status FROM post_comments WHERE post_id = $1 order by created_at",
               [req.params.id],
