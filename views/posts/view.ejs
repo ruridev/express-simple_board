@@ -5,15 +5,15 @@
     <a href="/posts">리스트로 돌아가기</a>
     <table border="1" width="100%">
       <tr>
-        <td><%= post.created_at %></td>
+        <td>작성자: <%= post.writer %></td>
         <td>조회수: <%= post.hit_count %></td>
       </tr>
       <tr>
-        <td>
+        <td width="500">
           <%= post.id %>. <%= post.title %>
         </td>
         <td>
-          작성자: <%= post.writer %>
+          <%= post.created_at %>
         </td>
       </tr>
       <tr>
@@ -35,7 +35,7 @@
     <div>
       <h1>코멘트</h1>
       <% comments.forEach(function (comment, _) { %> <% if(comment.status == 1) { %>
-      <div>
+      <div style="word-break: break-all; border-left: 2px solid #ccc; padding: 5px;">
         id: <%= comment.id %> <%= comment.created_at %><br />
         작성자: <%= comment.writer %> <br />
         <%= comment.updated_at %>에 삭제된 코멘트입니다.

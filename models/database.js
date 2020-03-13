@@ -14,7 +14,7 @@ class Postgres {
   }
 
   async execute(query, params = []) {
-    return (await this.client.query(query, params));
+    return await this.client.query(query, params);
   }
 
   async release() {

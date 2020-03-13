@@ -6,31 +6,47 @@
     <table border="1" width="100%">
       <tr>
         <th>id</th>
-        <th>제목</th>
+        <th width="400">제목</th>
         <th>작성자</th>
         <th>조회수</th>
-        <th>parent_id</th>
         <th>작성일자</th>
       </tr>
       <% posts.forEach(function (post, _) { %> <% if(post.status == 0){ %>
       <tr>
         <td><%= post.id %></td>
-        <td><a href="/posts/<%= post.id%>"><%= post.title %></a></td>
+        <td style="<%= 'padding-left: ' +((post.depth) * 10) + 'px' %>">
+          <%= post.depth > 0 ? "┌" : "" %>
+          <a href="/posts/<%= post.id%>"><%= post.title %></a>
+        </td>
         <td><%= post.writer %></td>
         <td><%= post.hit_count %></td>
-        <td><%= post.parent_id %></td>
         <td><%= post.created_at %></td>
       </tr>
       <% } else { %>
       <tr>
         <td><%= post.id %></td>
-        <td>삭제된 게시글입니다.</td>
+        <td style="<%= 'padding-left: ' +((post.depth) * 10) + 'px' %>">
+          <%= post.depth > 0 ? "┌" : "" %> 삭제된 게시글입니다.
+        </td>
         <td><%= post.writer %></td>
         <td><%= post.hit_count %></td>
-        <td><%= post.parent_id %></td>
         <td><%= post.created_at %></td>
       </tr>
       <% }}); %>
     </table>
+
+    <div style="text-align: center">
+      <% if(pagination.firstPage) { %>
+      <a href="/posts?page=<%= pagination.firstPage %>" style="margin: 20px;"><<</a>
+      <% }%> <% if(pagination.prevPage) { %>
+      <a href="/posts?page=<%= pagination.prevPage %>" style="margin: 20px;"><</a>
+      <% }%>
+      <a href="#" style="margin: 20px;"><%= pagination.page %></a>
+      <% if(pagination.nextPage) { %>
+      <a href="/posts?page=<%= pagination.nextPage %>" style="margin: 20px;">></a>
+      <% }%> <% if(pagination.lastPage) { %>
+      <a href="/posts?page=<%= pagination.lastPage %>" style="margin: 20px;">>></a>
+      <% }%>
+    </div>
   </body>
 </html>
