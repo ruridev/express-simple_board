@@ -6,7 +6,7 @@
   <body>
     <a href="/posts">리스트로 돌아가기</a>
     <h1><%= form.title %></h1>
-    <form method="post" action="<%= form.action%>">
+    <form method="post" action="<%= form.action%>" enctype="multipart/form-data">
       <% if(parent_post) { %>
       <input type="hidden" name="parent_id" value="<%= parent_post.id %>" />
       <h3>(id: <%= parent_post.id%>) <%= parent_post.title%> 게시글에 대한 답글입니다. <% }%></h3>
@@ -42,6 +42,11 @@
       <div>
         <label for="body">내용</label><br />
         <textarea name="body" required="true"><%= post ? post.body : '' %></textarea>
+      </div>
+      <div>
+      <div>
+        <label for="body">첨부파일</label><br />
+        <input type="file" name="file">
       </div>
       <div>
         <input type="submit" value="<%= form.submit %>" />
