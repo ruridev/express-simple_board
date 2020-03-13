@@ -16,6 +16,7 @@ class CreatePosts < ActiveRecord::Migration[6.0]
       t.integer :parent_id
       t.string :sort_key, null: false
       t.integer :status, default: 0
+      t.integer :depth, default: 0
 
       t.timestamps
     end
@@ -26,15 +27,15 @@ end
 
 ```sql
 -- create_table(:posts)
-   (20.1ms)  CREATE TABLE "posts" ("id" bigserial primary key, "title" text NOT NULL, "body" text NOT NULL, "writer" character varying NOT NULL, "encrypted_password" character varying NOT NULL, "hit_count" integer DEFAULT 0, "parent_id" integer, "sort_key" character varying NOT NULL, "status" integer DEFAULT 0, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)
-   -> 0.1829s
+   (19.2ms)  CREATE TABLE "posts" ("id" bigserial primary key, "title" text NOT NULL, "body" text NOT NULL, "writer" character varying NOT NULL, "encrypted_password" character varying NOT NULL, "hit_count" integer DEFAULT 0, "parent_id" integer, "sort_key" character varying NOT NULL, "status" integer DEFAULT 0, "depth" integer DEFAULT 0, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)
+   -> 0.0637s
 -- add_index(:posts, [:sort_key])
-   (7.4ms)  CREATE  INDEX  "index_posts_on_sort_key" ON "posts"  ("sort_key")
-   -> 0.0245s
-=> #<PG::Result:0x00007ff53777ce80 status=PGRES_COMMAND_OK ntuples=0 nfields=0 cmd_tuples=0>
+   (14.1ms)  CREATE  INDEX  "index_posts_on_sort_key" ON "posts"  ("sort_key")
+   -> 0.0547s
 ```
 
 ## port_comment
+
 `columns: id, post_id, body,  writer, encrypted_password, created_at, updated_at, status`
 
 `indexs: post_id`
