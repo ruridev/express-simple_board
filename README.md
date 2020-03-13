@@ -66,6 +66,13 @@ end
 => #<PG::Result:0x00007ff53876e938 status=PGRES_COMMAND_OK ntuples=0 nfields=0 cmd_tuples=0>
 ```
 
+## post_files
+id
+post_id
+originalname: 'file_name',
+path: 'uploads/0ee7609c05c9b786bd2ac93a280ae66f',
+size: 178
+
 # 참고
 [Node.js에서 exports와 mudule.exports의 차이](http://happinessoncode.com/2018/05/20/nodejs-exports-and-module-exports/)
 
@@ -76,4 +83,3 @@ end
 
 
 [テンプレートエンジンEJSで使える便利な構文まとめ](https://qiita.com/y_hokkey/items/31f1daa6cecb5f4ea4c9)
-
