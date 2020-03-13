@@ -4,7 +4,6 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-
 var indexRouter = require('./routes/index');
 var postsRouter = require('./routes/posts');
 var commentsRouter = require('./routes/comments');
@@ -21,8 +20,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({
+  type: 'application/*+json'
+}));
+
+// parse application/x-www-form-urlencoded 
+app.use(bodyParser.urlencoded({
+  extended: false,
+  type: 'application/x-www-form-urlencoded'
+}));
 
 app.use('/', indexRouter);
 app.use('/posts', postsRouter);

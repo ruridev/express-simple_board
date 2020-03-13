@@ -3,6 +3,10 @@ var router = express.Router();
 var db = require('../models/database');
 const { check, validationResult } = require('express-validator/check');
 var md5 = require('blueimp-md5');
+const multer = require('multer')
+const upload = multer({
+  dest: 'uploads/'
+})
 
 /* GET posts listing. */
 router.get('/', function(req, res, next) {
@@ -95,30 +99,40 @@ router.get('/:id', function(req, res, next) {
 /* GET posts listing. */
 router.post(
   '/',
-  [
-    check('writer')
+  upload.any(),
+    [
+      check('writer')
       .trim()
-      .isLength({ min: 1, max: 100 })
+      .isLength({
+        min: 1,
+        max: 100
+      })
       .exists(),
-    check('title')
+      check('title')
       .trim()
-      .isLength({ min: 1 })
+      .isLength({
+        min: 1
+      })
       .isString()
       .exists(),
-    check('body')
+      check('body')
       .trim()
-      .isLength({ min: 1 })
+      .isLength({
+        min: 1
+      })
       .isString()
       .exists(),
-    check('password')
+      check('password')
       .trim()
-      .isLength({ min: 1 })
+      .isLength({
+        min: 1
+      })
       .isString()
       .exists(),
-    check('parent_id')
+      check('parent_id')
       .isNumeric()
       .optional(),
-  ],
+    ],
   function(req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
