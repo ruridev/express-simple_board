@@ -68,11 +68,35 @@ end
 ```
 
 ## post_files
-id
-post_id
-originalname: 'file_name',
-path: 'uploads/0ee7609c05c9b786bd2ac93a280ae66f',
-size: 178
+
+`columns: id, post_id, original_name, path, size`
+
+`indexs: post_id`
+
+```rb
+class CreatePostFiles < ActiveRecord::Migration[6.0]
+  def change
+    create_table :post_files do |t|
+      t.integer :post_id, null: false
+      t.string :original_name, null: false
+      t.string :path, null: false
+      t.integer :size, default: 0
+
+      t.timestamps
+    end
+    add_index :post_files, [:post_id]
+  end
+end
+```
+
+```sql
+-- create_table(:post_files)
+   (19.8ms)  CREATE TABLE "post_files" ("id" bigserial primary key, "post_id" integer NOT NULL, "original_name" character varying NOT NULL, "path" character varying NOT NULL, "size" integer DEFAULT 0, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)
+   -> 0.2707s
+-- add_index(:post_files, [:post_id])
+   (10.8ms)  CREATE  INDEX  "index_post_files_on_post_id" ON "post_files"  ("post_id")
+   -> 0.7648s
+```
 
 # 참고
 [Node.js에서 exports와 mudule.exports의 차이](http://happinessoncode.com/2018/05/20/nodejs-exports-and-module-exports/)
