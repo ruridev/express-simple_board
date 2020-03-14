@@ -1,75 +1,44 @@
-var { getDBClient } = require('./database');
+var { execute } = require('./database');
 const { check } = require('express-validator/check');
 
-const SELECT_QUERY =
-  '\
-WITH RECURSIVE r_posts AS ( \
-  SELECT \
-    posts.*, \
-    1 AS depth \
-  FROM posts \
-  UNION ALL \
-  SELECT \
-    posts.*, \
-    r_posts.depth + 1 \
-  FROM posts \
-  INNER JOIN r_posts \
-    ON posts.parent_id = r.id \
-) \
-SELECT * FROM r_posts';
-
-const select = async (perPage, page) => {
-  const db = await getDBClient();
-  try {
-    const selectQuery =
+const select = async (params, transaction) => {
+  const proc = async (connection, { perPage, page }) => {
+    const query =
       "SELECT id, title, body, writer, hit_count, depth, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, parent_id, sort_key, status, (select count(1) from post_files where post_id = posts.id) as file_count FROM posts order by sort_key desc LIMIT $1 OFFSET ($2 - 1) * $1";
-    const params = [perPage, page];
-    const result = await db.execute(selectQuery, params);
-
+    const result = await connection.run_query(query, [perPage, page]);
     return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const count = async () => {
-  const db = await getDBClient();
-  try {
-    const selectQuery = 'SELECT count(1) as cnt from posts';
-    const result = await db.execute(selectQuery);
+const count = async (params, transaction) => {
+  const proc = async (connection, _) => {
+    const query = 'SELECT count(1) as cnt from posts';
+    const result = await connection.run_query(query);
     return result.rows[0].cnt;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const selectById = async id => {
-  const db = await getDBClient();
-  try {
-    const selectQuery =
-      "SELECT id, title, body, writer, hit_count, encrypted_password, depth, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, parent_id, sort_key, status FROM posts WHERE id = $1 ";
-    const result = await db.execute(selectQuery, [id]);
+const selectById = async (params, transaction) => {
+  const proc = async (connection, { id }) => {
+    const query =
+      "SELECT id, title, body, writer, hit_count, encrypted_password, depth, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, parent_id, sort_key, status FROM posts WHERE id = $1";
+    const result = await connection.run_query(query, [id]);
+
     return result.rows[0];
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const insertRecord = async (post, transaction) => {
-  const db = transaction || (await getDBClient());
-  try {
-    const insertQuery =
-      'Insert INTO posts(writer, title, body, encrypted_password, sort_key, parent_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING * ';
-    const params = [
+const insertRecord = async (params, transaction) => {
+  const proc = async (connection, { post }) => {
+    const query =
+      'Insert INTO posts(writer, title, body, encrypted_password, sort_key, parent_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *';
+    const result = await connection.run_query(query, [
       post.writer,
       post.title,
       post.body,
@@ -78,62 +47,51 @@ const insertRecord = async (post, transaction) => {
       post.parent_id,
       post.created_at,
       post.updated_at,
-    ];
-    const result = await db.execute(insertQuery, params);
-    return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    transaction || (await db.release());
-  }
+    ]);
+    return result.rows[0];
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const updateRecord = async (post, transaction) => {
-  const db = transaction || (await getDBClient());
-  try {
-    const updateQuery =
+const updateRecord = async (params, transaction) => {
+  const proc = async (connection, { post }) => {
+    const query =
       'update posts set title = $1, body = $2, updated_at = $3 where id = $4 RETURNING *';
-    const params = [post.title, post.body, post.updated_at, post.id];
-    const result = await db.execute(updateQuery, params);
+    const result = await connection.run_query(query, [
+      post.title,
+      post.body,
+      post.updated_at,
+      post.id,
+    ]);
     return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    transaction || (await db.release());
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const deleteRecord = async (id, updated_at, transaction) => {
-  const db = transaction || (await getDBClient());
-  try {
-    const updateQuery = 'update posts set status = 1, updated_at = $2 where id = $1 RETURNING *';
-    const params = [id, updated_at];
-    const result = await db.execute(updateQuery, params);
+const deleteRecord = async (params, transaction) => {
+  const proc = async (connection, { id, updated_at }) => {
+    const query = 'update posts set status = 1, updated_at = $2 where id = $1 RETURNING *';
+    const result = await connection.run_query(query, [id, updated_at]);
     return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    transaction || (await db.release());
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const sortRecord = async (post, parent_post, transaction) => {
-  const db = transaction || (await getDBClient());
-  try {
-    const updateQuery =
+const sortRecord = async (params, transaction) => {
+  const proc = async (connection, { post, parent_post }) => {
+    const query =
       "update posts set sort_key = concat(sort_key, lpad(to_hex(id), 6, '0')), depth = $2 where id = $1 RETURNING *";
-    const params = [post.id, parent_post ? parent_post.depth + 1 : 0];
-    const result = await db.execute(updateQuery, params);
+    const result = await connection.run_query(query, [
+      post.id,
+      parent_post ? parent_post.depth + 1 : 0,
+    ]);
     return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    transaction || (await db.release());
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
 const insertValidation = [

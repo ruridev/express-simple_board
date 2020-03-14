@@ -1,89 +1,69 @@
-var { getDBClient } = require('./database');
+var { execute } = require('./database');
 const { check } = require('express-validator/check');
 
-const select = async postId => {
-  const db = await getDBClient();
-  try {
-    const selectQuery =
-      "SELECT id, post_id, body, writer, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, status FROM post_comments WHERE post_id = $1 order by id ";
-    const result = await db.execute(selectQuery, [postId]);
+const select = async (params, transaction) => {
+  const proc = async (connection, { post_id }) => {
+    const query =
+      "SELECT id, post_id, body, writer, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, status FROM post_comments WHERE post_id = $1 order by id";
+    const result = await connection.run_query(query, [post_id]);
     return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const selectById = async id => {
-  const db = await getDBClient();
-  try {
-    const selectQuery =
+const selectById = async (params, transaction) => {
+  const proc = async (connection, { id }) => {
+    const query =
       "SELECT id, body, encrypted_password, writer, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at , updated_at, post_id, status FROM post_comments WHERE id = $1";
-    const result = await db.execute(selectQuery, [id]);
+    const result = await connection.run_query(query, [id]);
     return result.rows[0];
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const insertRecord = async comment => {
-  const db = await getDBClient();
-  try {
-    const insertQuery =
+const insertRecord = async (params, transaction) => {
+  const proc = async (connection, { comment }) => {
+    const query =
       'Insert INTO post_comments(post_id, writer, body, encrypted_password, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6)';
-    const params = [
+
+    const result = await connection.run_query(query, [
       comment.post_id,
       comment.writer,
       comment.body,
       comment.password,
       comment.created_at,
       comment.updated_at,
-    ];
-    const result = await db.execute(insertQuery, params);
-    return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+    ]);
+    return result.rows[0];
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const updateRecord = async comment => {
-  const db = await getDBClient();
-  try {
-    const updateQuery =
-      'UPDATE post_comments set body = $1, updated_at = $2 where id = $3 RETURNING *';
-    const params = [comment.body, comment.updated_at, comment.id];
-    const result = await db.execute(updateQuery, params);
-    return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+const updateRecord = async (params, transaction) => {
+  const proc = async (connection, { comment }) => {
+    const query = 'UPDATE post_comments set body = $1, updated_at = $2 where id = $3 RETURNING *';
+    const result = await connection.run_query(query, [
+      comment.body,
+      comment.updated_at,
+      comment.id,
+    ]);
+    return result.rows[0];
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
-const deleteRecord = async (id, updated_at) => {
-  const db = await getDBClient();
-  try {
-    const updateQuery =
-      'UPDATE post_comments set status=1, updated_at = $2 where id = $1 RETURNING *';
-    const params = [id, updated_at];
-    const result = await db.execute(updateQuery, params);
-    return result.rows;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  } finally {
-    await db.release();
-  }
+const deleteRecord = async (params, transaction) => {
+  const proc = async (connection, { id, updated_at }) => {
+    const query = 'UPDATE post_comments set status = 1, updated_at = $2 where id = $1 RETURNING *';
+    const result = await connection.run_query(query, [id, updated_at]);
+    return result.rows[0];
+  };
+  const result = await execute(proc, params, transaction);
+  return result;
 };
 
 const insertValidation = [
@@ -108,7 +88,7 @@ const insertValidation = [
     })
     .isString()
     .exists(),
-  check('post_id').isNumeric(),
+  check('id').isNumeric(),
 ];
 
 const updateValidation = [

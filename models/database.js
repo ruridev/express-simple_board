@@ -13,13 +13,13 @@ class Postgres {
     this.client = await pool.connect();
   }
 
-  async execute(query, params = []) {
+  async run_query(query, params = []) {
     return await this.client.query(query, params);
   }
 
   async release() {
     await this.client.release(true);
-    console.log('release');
+    console.log('RELEASE');
   }
 
   async begin() {
@@ -39,9 +39,22 @@ class Postgres {
 }
 
 const getClient = async () => {
+  console.log('DB CLIENT INIT');
   const postgres = new Postgres();
   await postgres.init();
   return postgres;
 };
 
+const execute = async (proc, params, transaction) => {
+  const connection = transaction || (await getClient());
+  var result = null;
+  try {
+    result = await proc(connection, params);
+  } finally {
+    transaction || (await connection.release());
+  }
+  return result;
+};
+
+module.exports.execute = execute;
 module.exports.getDBClient = getClient;
