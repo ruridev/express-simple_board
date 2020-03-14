@@ -25,6 +25,12 @@
       </tr>
       <tr>
         <td colspan="5">
+          <% postFiles.forEach(function (file, a) { %>
+          <a href="/<%=file.path%>"><%= file.original_name %></a> <% }) %>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5">
           <a href="/posts/<%= post.id %>/edit">수정하기</a>
           <a href="/posts/<%= post.id %>/delete">삭제하기</a>
           <a href="/posts/<%= post.id %>/reply">답글달기</a>
