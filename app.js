@@ -6,6 +6,7 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 var indexRouter = require('./routes/index');
 var postsRouter = require('./routes/posts');
+var fileRouter = require('./routes/file');
 var commentsRouter = require('./routes/comments');
 
 var app = express();
@@ -20,7 +21,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
 
 app.use(
   bodyParser.json({
@@ -37,6 +37,7 @@ app.use(
 );
 
 app.use('/', indexRouter);
+app.use('/file', fileRouter);
 app.use('/posts', postsRouter);
 app.use('/comments', commentsRouter);
 
