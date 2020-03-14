@@ -2,11 +2,12 @@ var express = require('express');
 var router = express.Router();
 var postModel = require('../models/post');
 var commentModel = require('../models/comment');
+var postFileModel = require('../models/post_file');
 const { check, validationResult } = require('express-validator/check');
 var md5 = require('blueimp-md5');
 const multer = require('multer');
 const upload = multer({
-  dest: 'uploads/',
+  dest: './public/uploads/',
 });
 
 /* GET posts listing. */
@@ -46,8 +47,8 @@ router.get('/new', function(req, res, next) {
 router.get('/:id', async function(req, res, next) {
   const post = await postModel.get(req.params.id);
   const comments = await commentModel.list(req.params.id);
-
-  res.status(200).render('posts/view', { post, comments });
+  const postFiles = await postFileModel.list(req.params.id);
+  res.status(200).render('posts/view', { post, comments, postFiles });
 });
 
 /* GET posts listing. */
@@ -70,6 +71,15 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
   };
   const result = await postModel.insert(post);
   await postModel.sort(result[0], parent_post);
+
+  req.files.forEach(async file => {
+    await postFileModel.insert(result[0].id, {
+      original_name: file.originalname,
+      path: file.path,
+      size: file.size,
+    });
+  });
+
   res.status(302).redirect('posts/' + result[0].id);
 });
 
