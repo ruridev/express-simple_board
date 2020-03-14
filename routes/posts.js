@@ -9,13 +9,13 @@ const multer = require('multer');
 const upload = multer({ dest: './routes/uploads/' });
 var { getDBClient } = require('../models/database');
 
-/* GET posts listing. */
 router.get('/', async function(req, res, next) {
   const perPage = 10;
   var { page } = req.query;
   page = page ? parseInt(page) : 1;
+
   const count = await postModel.count();
-  const posts = await postModel.list(perPage, page);
+  const posts = await postModel.list({ perPage, page });
 
   const firstPage = page == 1 ? null : 1;
   const lastPage = count / perPage > page ? parseInt(count / perPage) + 1 : null;
@@ -34,7 +34,6 @@ router.get('/', async function(req, res, next) {
   });
 });
 
-/* GET post */
 router.get('/new', function(req, res, next) {
   res.status(200).render('posts/form', {
     post: null,
@@ -43,29 +42,24 @@ router.get('/new', function(req, res, next) {
   });
 });
 
-/* GET post */
 router.get('/:id', async function(req, res, next) {
-  try {
-    const post = await postModel.get(req.params.id);
-    if (post == undefined) res.render('404');
-    const comments = await commentModel.list(post.id);
-    const postFiles = await postFileModel.list(post.id);
-    res.status(200).render('posts/view', { post, comments, postFiles });
-  } catch (e) {}
+  const post = await postModel.get({ id: req.params.id });
+  if (post == undefined) return res.render('404');
+
+  const comments = await commentModel.list({ post_id: post.id });
+  const postFiles = await postFileModel.list({ post_id: post.id });
+
+  res.status(200).render('posts/view', { post, comments, postFiles });
 });
 
-/* GET posts listing. */
 router.post('/', upload.any(), postModel.insertValidation, async function(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    console.log(errors.array());
-    return res.render('422');
-  }
+  if (!errors.isEmpty()) return res.render('422');
 
   const requested_at = new Date();
-  const parent_post = await postModel.get(req.body.parent_id);
+  const parent_post = await postModel.get({ id: req.body.parent_id });
 
-  const post = {
+  const postParam = {
     writer: req.body.writer,
     title: req.body.title,
     body: req.body.body,
@@ -76,56 +70,47 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
     updated_at: requested_at,
   };
 
-  var result = null;
+  var post = null;
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-
-    result = await postModel.insert(post, transaction);
-    await postModel.sort(result[0], parent_post, transaction);
-
+    post = await postModel.insert({ post: postParam }, transaction);
+    await postModel.sort({ post, parent_post }, transaction);
     req.files.forEach(async file => {
-      await postFileModel.insert(
-        result[0].id,
-        {
+      const postFileParam = {
+        id: post.id,
+        post_file: {
           original_name: file.originalname,
           file_name: file.filename,
           size: file.size,
           mimetype: file.mimetype,
         },
-        transaction,
-      );
+      };
+
+      await postFileModel.insert(postFileParam, transaction);
     });
     await transaction.commit();
+    res.status(302).redirect('/posts/' + post.id);
   } catch (e) {
-    console.log(e);
     await transaction.rollback();
-    res.status(302).redirect('/posts');
+    throw e;
   } finally {
     await transaction.release();
   }
-
-  res.status(302).redirect('/posts/' + result[0].id);
 });
 
-/* GET posts listing. */
 router.post('/:id', upload.any(), postModel.updateValidation, async function(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    console.log(errors.array());
-    return res.render('422');
-  }
+  if (!errors.isEmpty()) return res.render('422');
+
+  const post = await postModel.get({ id: req.params.id });
+  if (post == undefined) return res.render('404');
 
   const requested_at = new Date();
 
-  var result = null;
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-
-    const post = await postModel.get(req.params.id);
-
-    if (post == undefined) res.render('404');
 
     if (post.encrypted_password != md5(req.body.password)) {
       return res.render('400');
@@ -135,7 +120,7 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
       const arry =
         typeof req.body.delete_files == 'string' ? [req.body.delete_files] : req.body.delete_files;
       arry.forEach(async id => {
-        await postFileModel.delete(id, req.params.id, transaction);
+        await postFileModel.delete({ id: id, post_id: req.params.id }, transaction);
       });
     }
 
@@ -146,68 +131,58 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
       id: req.params.id,
       updated_at: requested_at,
     };
-    result = await postModel.update(postParam, transaction);
+    await postModel.update({ post: postParam }, transaction);
 
     req.files.forEach(async file => {
-      await postFileModel.insert(post.id, {
-        original_name: file.originalname,
-        file_name: file.filename,
-        size: file.size,
-        mimetype: file.mimetype,
-      });
-    }, transaction);
+      const postFileParam = {
+        post_id: post.id,
+        post_file: {
+          original_name: file.originalname,
+          file_name: file.filename,
+          size: file.size,
+          mimetype: file.mimetype,
+        },
+      };
+      await postFileModel.insert(postFileParam, transaction);
+    });
     await transaction.commit();
+
+    res.status(302).redirect('/posts/' + post.id);
   } catch (e) {
     await transaction.rollback();
-    console.log(e);
-    res.status(302).redirect('/posts');
+    throw e;
   } finally {
     await transaction.release();
   }
-
-  res.status(302).redirect('/posts/' + result[0].id);
 });
 
-/* GET posts listing. */
 router.post('/:id/delete', async function(req, res, next) {
-  const post = await postModel.get(req.params.id);
-  if (post.encrypted_password != md5(req.body.password)) {
-    return res.render('400');
-  }
+  const post = await postModel.get({ id: req.params.id });
+  if (post == undefined) return res.render('404');
+  if (post.encrypted_password != md5(req.body.password)) return res.render('400');
 
   const requestd_at = new Date();
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-
-    const post = await postModel.get(req.params.id);
-
-    if (post == undefined) res.render('404');
-
-    if (post.encrypted_password != md5(req.body.password)) {
-      return res.render('400');
-    }
-
-    await postModel.delete(req.params.id, requestd_at, transaction);
+    await postModel.delete({ id: req.params.id, updated_at: requestd_at }, transaction);
+    await postFileModel.delete({ post_id: req.params.id }, transaction);
     await transaction.commit();
 
     res.status(302).redirect('/posts');
   } catch (e) {
-    console.log(e);
     await transaction.rollback();
-    res.status(302).redirect('/posts');
+    throw e;
   } finally {
     await transaction.release();
   }
 });
 
-/* GET post */
 router.get('/:id/edit', async function(req, res, next) {
-  const post = await postModel.get(req.params.id);
+  const post = await postModel.get({ id: req.params.id });
+  if (post == undefined) return res.render('404');
 
-  if (post == undefined) res.render('404');
-
-  const postFiles = await postFileModel.list(req.params.id);
+  const postFiles = await postFileModel.list({ post_id: req.params.id });
 
   res.status(200).render('posts/form', {
     post,
@@ -216,18 +191,15 @@ router.get('/:id/edit', async function(req, res, next) {
   });
 });
 
-/* GET post */
 router.get('/:id/delete', function(req, res, next) {
   res.status(200).render('posts/delete', {
     post_id: req.params.id,
   });
 });
 
-/* GET post */
 router.get('/:id/reply', async function(req, res, next) {
-  const parent_post = await postModel.get(req.params.id);
-
   if (parent_post == undefined) res.render('404');
+  const parent_post = await postModel.get({ id: req.params.id });
 
   res.status(200).render('posts/form', {
     post: null,
@@ -236,18 +208,16 @@ router.get('/:id/reply', async function(req, res, next) {
   });
 });
 
-/* GET post */
-router.post('/:post_id/comments', commentModel.insertValidation, async function(req, res, next) {
+router.post('/:id/comments', commentModel.insertValidation, async function(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    console.log(errors.array());
-    return res.render('422');
-  }
-
+  if (!errors.isEmpty()) return res.render('422');
   const requested_at = new Date();
 
+  const post = await postModel.get({ id: req.params.id });
+  if (post == undefined) return res.render('404');
+
   const comment = {
-    post_id: req.params.post_id,
+    post_id: req.params.id,
     writer: req.body.writer,
     body: req.body.body,
     password: md5(req.body.password),
@@ -255,8 +225,8 @@ router.post('/:post_id/comments', commentModel.insertValidation, async function(
     updated_at: requested_at,
   };
 
-  await commentModel.insert(comment);
-  res.status(302).redirect('/posts/' + req.params.post_id);
+  await commentModel.insert({ comment });
+  res.redirect('/posts/' + post.id);
 });
 
 module.exports = router;
