@@ -91,6 +91,13 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     return res.render('422');
   }
 
+  if (req.body.delete_files) {
+    const arry =
+      typeof req.body.delete_files == 'string' ? [req.body.delete_files] : req.body.delete_files;
+    arry.forEach(async id => {
+      await postFileModel.delete(id, req.params.id);
+    });
+  }
   const post = await postModel.get(req.params.id);
   if (post.encrypted_password != md5(req.body.password)) {
     return res.render('400');
@@ -103,6 +110,15 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     id: req.params.id,
   };
   const result = await postModel.update(postParam);
+
+  req.files.forEach(async file => {
+    await postFileModel.insert(post.id, {
+      original_name: file.originalname,
+      path: file.path,
+      size: file.size,
+    });
+  });
+
   res.status(302).redirect('/posts/' + result[0].id);
 });
 
@@ -125,10 +141,12 @@ router.post('/:id/delete', async function(req, res, next) {
 /* GET post */
 router.get('/:id/edit', async function(req, res, next) {
   const post = await postModel.get(req.params.id);
+  const postFiles = await postFileModel.list(req.params.id);
 
   res.status(200).render('posts/form', {
     post,
     parent_post: null,
+    postFiles,
   });
 });
 
