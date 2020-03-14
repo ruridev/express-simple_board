@@ -36,7 +36,7 @@ end
 
 ## port_comment
 
-`columns: id, post_id, body,  writer, encrypted_password, created_at, updated_at, status`
+`columns: id, post_id, body, writer, encrypted_password, created_at, updated_at, status`
 
 `indexs: post_id`
 
@@ -76,29 +76,36 @@ end
 ```rb
 class CreatePostFiles < ActiveRecord::Migration[6.0]
   def change
+  drop_table :post_files
     create_table :post_files do |t|
       t.integer :post_id, null: false
       t.string :original_name, null: false
-      t.string :path, null: false
+      t.string :file_name, null: false
+      t.string :mimetype, null: false
       t.integer :size, default: 0
 
       t.timestamps
     end
     add_index :post_files, [:post_id]
+    add_index :post_files, [:file_name]
   end
 end
 ```
 
 ```sql
 -- create_table(:post_files)
-   (19.8ms)  CREATE TABLE "post_files" ("id" bigserial primary key, "post_id" integer NOT NULL, "original_name" character varying NOT NULL, "path" character varying NOT NULL, "size" integer DEFAULT 0, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)
-   -> 0.2707s
+   (17.9ms)  CREATE TABLE "post_files" ("id" bigserial primary key, "post_id" integer NOT NULL, "original_name" character varying NOT NULL, "file_name" character varying NOT NULL, "mimetype" character varying NOT NULL, "size" integer DEFAULT 0, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL)
+   -> 0.0272s
 -- add_index(:post_files, [:post_id])
-   (10.8ms)  CREATE  INDEX  "index_post_files_on_post_id" ON "post_files"  ("post_id")
-   -> 0.7648s
+   (10.6ms)  CREATE  INDEX  "index_post_files_on_post_id" ON "post_files"  ("post_id")
+   -> 0.0357s
+-- add_index(:post_files, [:file_name])
+   (14.6ms)  CREATE  INDEX  "index_post_files_on_file_name" ON "post_files"  ("file_name")
+   -> 0.0361s
 ```
 
 # 참고
+
 [Node.js에서 exports와 mudule.exports의 차이](http://happinessoncode.com/2018/05/20/nodejs-exports-and-module-exports/)
 
 - module.exports는 개별 함수가 아닌 객체를 통째로 exports 하는 경우에 사용.
@@ -107,4 +114,4 @@ end
 - exports는 module.exports를 참조하는 변수이다.
 
 
-[テンプレートエンジンEJSで使える便利な構文まとめ](https://qiita.com/y_hokkey/items/31f1daa6cecb5f4ea4c9)
+[テンプレートエンジン EJS で使える便利な構文まとめ](https://qiita.com/y_hokkey/items/31f1daa6cecb5f4ea4c9)
