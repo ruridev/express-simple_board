@@ -76,8 +76,8 @@ const insertRecord = async (post, transaction) => {
       post.password,
       post.sort_key,
       post.parent_id,
-      new Date(),
-      new Date(),
+      post.created_at,
+      post.updated_at,
     ];
     const result = await db.execute(insertQuery, params);
     return result.rows;
@@ -94,7 +94,7 @@ const updateRecord = async (post, transaction) => {
   try {
     const updateQuery =
       'update posts set title = $1, body = $2, updated_at = $3 where id = $4 RETURNING *';
-    const params = [post.title, post.body, new Date(), post.id];
+    const params = [post.title, post.body, post.updated_at, post.id];
     const result = await db.execute(updateQuery, params);
     return result.rows;
   } catch (e) {
@@ -105,11 +105,11 @@ const updateRecord = async (post, transaction) => {
   }
 };
 
-const deleteRecord = async (id, transaction) => {
+const deleteRecord = async (id, updated_at, transaction) => {
   const db = transaction || (await getDBClient());
   try {
     const updateQuery = 'update posts set status = 1, updated_at = $2 where id = $1 RETURNING *';
-    const params = [id, new Date()];
+    const params = [id, updated_at];
     const result = await db.execute(updateQuery, params);
     return result.rows;
   } catch (e) {
