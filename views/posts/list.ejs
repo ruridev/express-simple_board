@@ -16,7 +16,9 @@
         <td><%= post.id %></td>
         <td style="<%= 'padding-left: ' +((post.depth) * 10) + 'px' %>">
           <%= post.depth > 0 ? "┌" : "" %>
-          <a href="/posts/<%= post.id%>"><%= post.title %></a>
+          <a href="/posts/<%= post.id%>"
+            ><%= post.title %><%= post.file_count > 0 ? "(첨부)":"" %></a
+          >
         </td>
         <td><%= post.writer %></td>
         <td><%= post.hit_count %></td>

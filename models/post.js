@@ -22,7 +22,7 @@ const select = async (perPage, page) => {
   const db = await getDBClient();
   try {
     const selectQuery =
-      "SELECT id, title, body, writer, hit_count, depth, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, parent_id, sort_key, status FROM posts order by sort_key desc LIMIT $1 OFFSET ($2 - 1) * $1";
+      "SELECT id, title, body, writer, hit_count, depth, to_char(created_at, 'yyyy/mm/dd hh24:mm:ss') as created_at, to_char(updated_at, 'yyyy/mm/dd hh24:mm:ss') as updated_at, parent_id, sort_key, status, (select count(1) from post_files where post_id = posts.id) as file_count FROM posts order by sort_key desc LIMIT $1 OFFSET ($2 - 1) * $1";
     const params = [perPage, page];
     const result = await db.execute(selectQuery, params);
 
@@ -124,7 +124,6 @@ const deleteRecord = async id => {
 const sortRecord = async (post, parent_post) => {
   const db = await getDBClient();
   try {
-    console.log(post.id);
     const updateQuery =
       "update posts set sort_key = concat(sort_key, lpad(to_hex(id), 6, '0')), depth = $2 where id = $1 RETURNING *";
     const params = [post.id, parent_post ? parent_post.depth + 1 : 0];
