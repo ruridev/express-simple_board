@@ -45,10 +45,13 @@ router.get('/new', function(req, res, next) {
 
 /* GET post */
 router.get('/:id', async function(req, res, next) {
-  const post = await postModel.get(req.params.id);
-  const comments = await commentModel.list(req.params.id);
-  const postFiles = await postFileModel.list(req.params.id);
-  res.status(200).render('posts/view', { post, comments, postFiles });
+  try {
+    const post = await postModel.get(req.params.id);
+    if (post == undefined) res.render('404');
+    const comments = await commentModel.list(post.id);
+    const postFiles = await postFileModel.list(post.id);
+    res.status(200).render('posts/view', { post, comments, postFiles });
+  } catch (e) {}
 });
 
 /* GET posts listing. */
@@ -120,16 +123,20 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
   try {
     await transaction.begin();
 
+    const post = await postModel.get(req.params.id);
+
+    if (post == undefined) res.render('404');
+
+    if (post.encrypted_password != md5(req.body.password)) {
+      return res.render('400');
+    }
+
     if (req.body.delete_files) {
       const arry =
         typeof req.body.delete_files == 'string' ? [req.body.delete_files] : req.body.delete_files;
       arry.forEach(async id => {
         await postFileModel.delete(id, req.params.id, transaction);
       });
-    }
-    const post = await postModel.get(req.params.id);
-    if (post.encrypted_password != md5(req.body.password)) {
-      return res.render('400');
     }
 
     const postParam = {
@@ -172,13 +179,19 @@ router.post('/:id/delete', async function(req, res, next) {
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-    const result = await postModel.delete(req.params.id, requestd_at, transaction);
-    await transaction.commit();
-    if (result.length > 0) {
-      res.status(302).redirect('/posts');
-    } else {
-      res.render('400');
+
+    const post = await postModel.get(req.params.id);
+
+    if (post == undefined) res.render('404');
+
+    if (post.encrypted_password != md5(req.body.password)) {
+      return res.render('400');
     }
+
+    await postModel.delete(req.params.id, requestd_at, transaction);
+    await transaction.commit();
+
+    res.status(302).redirect('/posts');
   } catch (e) {
     console.log(e);
     await transaction.rollback();
@@ -191,6 +204,9 @@ router.post('/:id/delete', async function(req, res, next) {
 /* GET post */
 router.get('/:id/edit', async function(req, res, next) {
   const post = await postModel.get(req.params.id);
+
+  if (post == undefined) res.render('404');
+
   const postFiles = await postFileModel.list(req.params.id);
 
   res.status(200).render('posts/form', {
@@ -210,6 +226,8 @@ router.get('/:id/delete', function(req, res, next) {
 /* GET post */
 router.get('/:id/reply', async function(req, res, next) {
   const parent_post = await postModel.get(req.params.id);
+
+  if (post == undefined) res.render('404');
 
   res.status(200).render('posts/form', {
     post: null,
