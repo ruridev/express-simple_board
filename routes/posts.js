@@ -3,12 +3,11 @@ var router = express.Router();
 var postModel = require('../models/post');
 var commentModel = require('../models/comment');
 var postFileModel = require('../models/post_file');
-const { check, validationResult } = require('express-validator/check');
+const { validationResult } = require('express-validator/check');
 var md5 = require('blueimp-md5');
 const multer = require('multer');
-const upload = multer({
-  dest: './public/uploads/',
-});
+const upload = multer({ dest: './public/uploads/' });
+var { getDBClient } = require('../models/database');
 
 /* GET posts listing. */
 router.get('/', async function(req, res, next) {
@@ -40,6 +39,7 @@ router.get('/new', function(req, res, next) {
   res.status(200).render('posts/form', {
     post: null,
     parent_post: null,
+    postFiles: [],
   });
 });
 
@@ -69,18 +69,39 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
     sort_key: parent_post ? parent_post.sort_key : '',
     parent_id: parent_post ? parent_post.id : 0,
   };
-  const result = await postModel.insert(post);
-  await postModel.sort(result[0], parent_post);
 
-  req.files.forEach(async file => {
-    await postFileModel.insert(result[0].id, {
-      original_name: file.originalname,
-      path: file.path,
-      size: file.size,
+  var result = null;
+  const transaction = await getDBClient();
+  try {
+    await transaction.begin();
+
+    console.log(post);
+    console.log(transaction);
+    result = await postModel.insert(post, transaction);
+    console.log('');
+    await postModel.sort(result[0], parent_post, transaction);
+
+    req.files.forEach(async file => {
+      await postFileModel.insert(
+        result[0].id,
+        {
+          original_name: file.originalname,
+          path: file.path,
+          size: file.size,
+        },
+        transaction,
+      );
     });
-  });
+    await transaction.commit();
+  } catch (e) {
+    console.log(e);
+    await transaction.rollback();
+    res.status(302).redirect('/posts');
+  } finally {
+    transaction.release();
+  }
 
-  res.status(302).redirect('posts/' + result[0].id);
+  res.status(302).redirect('/posts/' + result[0].id);
 });
 
 /* GET posts listing. */
@@ -91,33 +112,46 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     return res.render('422');
   }
 
-  if (req.body.delete_files) {
-    const arry =
-      typeof req.body.delete_files == 'string' ? [req.body.delete_files] : req.body.delete_files;
-    arry.forEach(async id => {
-      await postFileModel.delete(id, req.params.id);
-    });
-  }
-  const post = await postModel.get(req.params.id);
-  if (post.encrypted_password != md5(req.body.password)) {
-    return res.render('400');
-  }
+  var result = null;
+  const transaction = await getDBClient();
+  try {
+    await transaction.begin();
 
-  const postParam = {
-    title: req.body.title,
-    body: req.body.body,
-    password: md5(req.body.password),
-    id: req.params.id,
-  };
-  const result = await postModel.update(postParam);
+    if (req.body.delete_files) {
+      const arry =
+        typeof req.body.delete_files == 'string' ? [req.body.delete_files] : req.body.delete_files;
+      arry.forEach(async id => {
+        await postFileModel.delete(id, req.params.id, transaction);
+      });
+    }
+    const post = await postModel.get(req.params.id);
+    if (post.encrypted_password != md5(req.body.password)) {
+      return res.render('400');
+    }
 
-  req.files.forEach(async file => {
-    await postFileModel.insert(post.id, {
-      original_name: file.originalname,
-      path: file.path,
-      size: file.size,
-    });
-  });
+    const postParam = {
+      title: req.body.title,
+      body: req.body.body,
+      password: md5(req.body.password),
+      id: req.params.id,
+    };
+    result = await postModel.update(postParam, transaction);
+
+    req.files.forEach(async file => {
+      await postFileModel.insert(post.id, {
+        original_name: file.originalname,
+        path: file.path,
+        size: file.size,
+      });
+    }, transaction);
+    await transaction.commit();
+  } catch (e) {
+    await transaction.rollback();
+    console.log(e);
+    res.status(302).redirect('/posts');
+  } finally {
+    transaction.release();
+  }
 
   res.status(302).redirect('/posts/' + result[0].id);
 });
@@ -129,12 +163,22 @@ router.post('/:id/delete', async function(req, res, next) {
     return res.render('400');
   }
 
-  const result = await postModel.delete(req.params.id);
-
-  if (result.length > 0) {
+  const transaction = await getDBClient();
+  try {
+    await transaction.begin();
+    const result = await postModel.delete(req.params.id, transaction);
+    await transaction.commit();
+    if (result.length > 0) {
+      res.status(302).redirect('/posts');
+    } else {
+      res.render('400');
+    }
+  } catch (e) {
+    console.log(e);
+    await transaction.rollback();
     res.status(302).redirect('/posts');
-  } else {
-    res.render('400');
+  } finally {
+    transaction.release();
   }
 });
 
@@ -164,6 +208,7 @@ router.get('/:id/reply', async function(req, res, next) {
   res.status(200).render('posts/form', {
     post: null,
     parent_post,
+    postFiles: [],
   });
 });
 
@@ -181,7 +226,8 @@ router.post('/:post_id/comments', commentModel.insertValidation, async function(
     body: req.body.body,
     password: md5(req.body.password),
   };
-  const result = await commentModel.insert(comment);
+
+  await commentModel.insert(comment);
   res.status(302).redirect('/posts/' + req.params.post_id);
 });
 

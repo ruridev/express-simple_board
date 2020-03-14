@@ -44,7 +44,7 @@
         <textarea name="body" required="true"><%= post ? post.body : '' %></textarea>
       </div>
       <div>
-      <div id="file_box">
+      <div>
         <label for="body">첨부파일</label><br />
         <% postFiles.forEach(function (file, a) { %>
           <div>・<%= file.original_name %> <input type="checkbox" name="delete_files" value="<%=file.id%>"></input>삭제</div>
@@ -54,6 +54,8 @@
             document.getElementById("file_box").innerHTML += "<input type='file' name='file'><br>";
           }
         </script>
+      </div>
+      <div id="file_box">
         <input type="file" name="file"><input type="button" onClick="addFileInputBox()" value="파일추가"></input><br>
       </div>
       <div>

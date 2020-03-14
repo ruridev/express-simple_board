@@ -64,8 +64,8 @@ const selectById = async id => {
   }
 };
 
-const insertRecord = async post => {
-  const db = await getDBClient();
+const insertRecord = async (post, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const insertQuery =
       'Insert INTO posts(writer, title, body, encrypted_password, sort_key, parent_id, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING * ';
@@ -85,12 +85,12 @@ const insertRecord = async post => {
     console.log(e);
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 
-const updateRecord = async post => {
-  const db = await getDBClient();
+const updateRecord = async (post, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const updateQuery =
       'update posts set title = $1, body = $2, updated_at = $3 where id = $4 RETURNING *';
@@ -101,12 +101,12 @@ const updateRecord = async post => {
     console.log(e);
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 
-const deleteRecord = async id => {
-  const db = await getDBClient();
+const deleteRecord = async (id, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const updateQuery = 'update posts set status = 1, updated_at = $2 where id = $1 RETURNING *';
     const params = [id, new Date()];
@@ -114,15 +114,14 @@ const deleteRecord = async id => {
     return result.rows;
   } catch (e) {
     console.log(e);
-    Record;
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 
-const sortRecord = async (post, parent_post) => {
-  const db = await getDBClient();
+const sortRecord = async (post, parent_post, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const updateQuery =
       "update posts set sort_key = concat(sort_key, lpad(to_hex(id), 6, '0')), depth = $2 where id = $1 RETURNING *";
@@ -133,7 +132,7 @@ const sortRecord = async (post, parent_post) => {
     console.log(e);
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 

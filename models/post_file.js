@@ -18,8 +18,8 @@ const select = async post_id => {
   }
 };
 
-const insertRecord = async (post_id, post_file) => {
-  const db = await getDBClient();
+const insertRecord = async (post_id, post_file, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const insertQuery =
       'Insert INTO post_files(post_id, original_name, path, size, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING * ';
@@ -37,12 +37,12 @@ const insertRecord = async (post_id, post_file) => {
     console.log(e);
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 
-const deleteRecord = async (id, post_id) => {
-  const db = await getDBClient();
+const deleteRecord = async (id, post_id, transaction) => {
+  const db = transaction || (await getDBClient());
   try {
     const deleteQuery = 'delete from post_files where id =$1 and post_id = $2';
     const params = [id, post_id];
@@ -51,7 +51,7 @@ const deleteRecord = async (id, post_id) => {
     console.log(e);
     throw e;
   } finally {
-    await db.release();
+    transaction || (await db.release());
   }
 };
 
