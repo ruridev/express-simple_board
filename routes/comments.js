@@ -20,6 +20,8 @@ router.post('/:id', commentModel.updateValidation, async function(req, res, next
     return res.render('422');
   }
 
+  const requested_at = new Date();
+
   const comment = await commentModel.get(req.params.id);
   if (comment.encrypted_password != md5(req.body.password)) {
     return res.render('400');
@@ -29,6 +31,7 @@ router.post('/:id', commentModel.updateValidation, async function(req, res, next
     body: req.body.body,
     id: req.params.id,
     password: md5(req.body.password),
+    updated_at: requested_at,
   };
   const result = await commentModel.update(commentParam);
   res.status(302).redirect('/posts/' + result[0].post_id);
@@ -48,13 +51,14 @@ router.post('/:id/delete', async function(req, res, next) {
     console.log(errors.array());
     return res.render('422');
   }
+  const requested_at = new Date();
 
   const comment = await commentModel.get(req.params.id);
   if (comment.encrypted_password != md5(req.body.password)) {
     return res.render('400');
   }
 
-  const result = await commentModel.delete(req.params.id);
+  const result = await commentModel.delete(req.params.id, requested_at);
   res.status(302).redirect('/posts/' + result[0].post_id);
 });
 

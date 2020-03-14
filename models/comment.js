@@ -41,8 +41,8 @@ const insertRecord = async comment => {
       comment.writer,
       comment.body,
       comment.password,
-      new Date(),
-      new Date(),
+      comment.created_at,
+      comment.updated_at,
     ];
     const result = await db.execute(insertQuery, params);
     return result.rows;
@@ -54,12 +54,12 @@ const insertRecord = async comment => {
   }
 };
 
-const updateRecord = async post => {
+const updateRecord = async comment => {
   const db = await getDBClient();
   try {
     const updateQuery =
       'UPDATE post_comments set body = $1, updated_at = $2 where id = $3 RETURNING *';
-    const params = [post.body, new Date(), post.id];
+    const params = [comment.body, comment.updated_at, comment.id];
     const result = await db.execute(updateQuery, params);
     return result.rows;
   } catch (e) {
@@ -70,12 +70,12 @@ const updateRecord = async post => {
   }
 };
 
-const deleteRecord = async id => {
+const deleteRecord = async (id, updated_at) => {
   const db = await getDBClient();
   try {
     const updateQuery =
       'UPDATE post_comments set status=1, updated_at = $2 where id = $1 RETURNING *';
-    const params = [id, new Date()];
+    const params = [id, updated_at];
     const result = await db.execute(updateQuery, params);
     return result.rows;
   } catch (e) {

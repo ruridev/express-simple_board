@@ -59,6 +59,7 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
     return res.render('422');
   }
 
+  const requested_at = new Date();
   const parent_post = await postModel.get(req.body.parent_id);
 
   const post = {
@@ -68,6 +69,8 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
     password: md5(req.body.password),
     sort_key: parent_post ? parent_post.sort_key : '',
     parent_id: parent_post ? parent_post.id : 0,
+    created_at: requested_at,
+    updated_at: requested_at,
   };
 
   var result = null;
@@ -110,6 +113,8 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     return res.render('422');
   }
 
+  const requested_at = new Date();
+
   var result = null;
   const transaction = await getDBClient();
   try {
@@ -132,6 +137,7 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
       body: req.body.body,
       password: md5(req.body.password),
       id: req.params.id,
+      updated_at: requested_at,
     };
     result = await postModel.update(postParam, transaction);
 
@@ -162,10 +168,11 @@ router.post('/:id/delete', async function(req, res, next) {
     return res.render('400');
   }
 
+  const requestd_at = new Date();
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-    const result = await postModel.delete(req.params.id, transaction);
+    const result = await postModel.delete(req.params.id, requestd_at, transaction);
     await transaction.commit();
     if (result.length > 0) {
       res.status(302).redirect('/posts');
@@ -219,11 +226,15 @@ router.post('/:post_id/comments', commentModel.insertValidation, async function(
     return res.render('422');
   }
 
+  const requested_at = new Date();
+
   const comment = {
     post_id: req.params.post_id,
     writer: req.body.writer,
     body: req.body.body,
     password: md5(req.body.password),
+    created_at: requested_at,
+    updated_at: requested_at,
   };
 
   await commentModel.insert(comment);
