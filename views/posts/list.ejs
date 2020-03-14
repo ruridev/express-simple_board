@@ -5,23 +5,21 @@
     <a href="/posts/new">작성하기</a>
     <table border="1" width="100%">
       <tr>
-        <th>id</th>
-        <th width="400">제목</th>
-        <th>작성자</th>
-        <th>조회수</th>
-        <th>작성일자</th>
+        <th width="30">id</th>
+        <th width="500">제목</th>
+        <th width="150">작성자</th>
+        <th width="150">작성일자</th>
       </tr>
       <% posts.forEach(function (post, _) { %> <% if(post.status == 0){ %>
       <tr>
         <td><%= post.id %></td>
-        <td style="<%= 'padding-left: ' +((post.depth) * 10) + 'px' %>">
+        <td style="padding: 4px; <%= 'padding-left: ' +(4 +((post.depth) * 10)) + 'px' %>">
           <%= post.depth > 0 ? "┌" : "" %>
-          <a href="/posts/<%= post.id%>"
-            ><%= post.title %><%= post.file_count > 0 ? "(첨부)":"" %></a
-          >
+          <a href="/posts/<%= post.id%>">
+            <%= post.title %><%= post.file_count > 0 ? "(첨부)":"" %>
+          </a>
         </td>
         <td><%= post.writer %></td>
-        <td><%= post.hit_count %></td>
         <td><%= post.created_at %></td>
       </tr>
       <% } else { %>
@@ -31,7 +29,6 @@
           <%= post.depth > 0 ? "┌" : "" %> 삭제된 게시글입니다.
         </td>
         <td><%= post.writer %></td>
-        <td><%= post.hit_count %></td>
         <td><%= post.created_at %></td>
       </tr>
       <% }}); %>

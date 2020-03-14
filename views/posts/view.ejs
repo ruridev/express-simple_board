@@ -5,12 +5,11 @@
     <a href="/posts">리스트로 돌아가기</a>
     <table border="1" width="100%">
       <tr>
-        <td>작성자: <%= post.writer %></td>
-        <td>조회수: <%= post.hit_count %></td>
+        <td colspan="2"><%= post.id %>. <%= post.title %></td>
       </tr>
       <tr>
         <td width="500">
-          <%= post.id %>. <%= post.title %>
+          작성자: <%= post.writer %>
         </td>
         <td>
           <%= post.created_at %>

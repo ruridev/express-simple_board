@@ -80,7 +80,6 @@ const deleteRecord = async id => {
     return result.rows;
   } catch (e) {
     console.log(e);
-    Record;
     throw e;
   } finally {
     await db.release();
