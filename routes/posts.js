@@ -6,7 +6,7 @@ var postFileModel = require('../models/post_file');
 const { validationResult } = require('express-validator/check');
 var md5 = require('blueimp-md5');
 const multer = require('multer');
-const upload = multer({ dest: './public/uploads/' });
+const upload = multer({ dest: './routes/uploads/' });
 var { getDBClient } = require('../models/database');
 
 /* GET posts listing. */
@@ -75,10 +75,7 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
   try {
     await transaction.begin();
 
-    console.log(post);
-    console.log(transaction);
     result = await postModel.insert(post, transaction);
-    console.log('');
     await postModel.sort(result[0], parent_post, transaction);
 
     req.files.forEach(async file => {
@@ -86,8 +83,9 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
         result[0].id,
         {
           original_name: file.originalname,
-          path: file.path,
+          file_name: file.filename,
           size: file.size,
+          mimetype: file.mimetype,
         },
         transaction,
       );
@@ -98,7 +96,7 @@ router.post('/', upload.any(), postModel.insertValidation, async function(req, r
     await transaction.rollback();
     res.status(302).redirect('/posts');
   } finally {
-    transaction.release();
+    await transaction.release();
   }
 
   res.status(302).redirect('/posts/' + result[0].id);
@@ -140,8 +138,9 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     req.files.forEach(async file => {
       await postFileModel.insert(post.id, {
         original_name: file.originalname,
-        path: file.path,
+        file_name: file.filename,
         size: file.size,
+        mimetype: file.mimetype,
       });
     }, transaction);
     await transaction.commit();
@@ -150,7 +149,7 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
     console.log(e);
     res.status(302).redirect('/posts');
   } finally {
-    transaction.release();
+    await transaction.release();
   }
 
   res.status(302).redirect('/posts/' + result[0].id);
@@ -178,7 +177,7 @@ router.post('/:id/delete', async function(req, res, next) {
     await transaction.rollback();
     res.status(302).redirect('/posts');
   } finally {
-    transaction.release();
+    await transaction.release();
   }
 });
 

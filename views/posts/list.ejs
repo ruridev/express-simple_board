@@ -25,7 +25,7 @@
       <% } else { %>
       <tr>
         <td><%= post.id %></td>
-        <td style="<%= 'padding-left: ' +((post.depth) * 10) + 'px' %>">
+        <td style="<%= 'padding-left: ' +(4+(((post.depth) * 10))) + 'px' %>">
           <%= post.depth > 0 ? "┌" : "" %> 삭제된 게시글입니다.
         </td>
         <td><%= post.writer %></td>
@@ -37,15 +37,15 @@
     <div style="text-align: center">
       <% if(pagination.firstPage) { %>
       <a href="/posts?page=<%= pagination.firstPage %>" style="margin: 20px;"><<</a>
-      <% }%> <% if(pagination.prevPage) { %>
+      <% }else {%> <span style="margin: 20px;"><<</span><% } if(pagination.prevPage) { %>
       <a href="/posts?page=<%= pagination.prevPage %>" style="margin: 20px;"><</a>
-      <% }%>
+      <% } else {%> <span style="margin: 20px;"><</span> <% } %>
       <a href="#" style="margin: 20px;"><%= pagination.page %></a>
       <% if(pagination.nextPage) { %>
       <a href="/posts?page=<%= pagination.nextPage %>" style="margin: 20px;">></a>
-      <% }%> <% if(pagination.lastPage) { %>
+      <% }else {%> <span style="margin: 20px;">></span> <% } if(pagination.lastPage) { %>
       <a href="/posts?page=<%= pagination.lastPage %>" style="margin: 20px;">>></a>
-      <% }%>
+      <% } else {%> <span style="margin: 20px;">>></span> <% } %>
     </div>
   </body>
 </html>

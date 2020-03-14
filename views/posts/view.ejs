@@ -17,15 +17,13 @@
       </tr>
       <tr>
         <td colspan="5">
-          <div style="min-height: 200px;">
-            <%= post.body %>
-          </div>
+          <div style="min-height: 200px; white-space: pre-wrap;"><%= post.body %></div>
         </td>
       </tr>
       <tr>
         <td colspan="5">
           <% postFiles.forEach(function (file, a) { %>
-          <div>・<a href="/<%=file.path%>"><%= file.original_name %></a></div>
+          <div>・<a href="/file/<%=file.file_name%>"><%= file.original_name %></a></div>
           <% }) %>
         </td>
       </tr>
