@@ -26,7 +26,8 @@
       <tr>
         <td colspan="5">
           <% postFiles.forEach(function (file, a) { %>
-          <a href="/<%=file.path%>"><%= file.original_name %></a> <% }) %>
+          <div>・<a href="/<%=file.path%>"><%= file.original_name %></a></div>
+          <% }) %>
         </td>
       </tr>
       <tr>
@@ -52,8 +53,7 @@
         <a href="/comments/<%= comment.id %>/edit">수정</a> /
         <a href="/comments/<%= comment.id %>/delete">삭제</a><br />
         작성자: <%= comment.writer %><br />
-
-        <%= comment.body %>
+        <div style="white-space: pre-wrap;"><%= comment.body %></div>
       </div>
       <% } %>
       <br />

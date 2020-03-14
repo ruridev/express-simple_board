@@ -41,16 +41,14 @@ const insertRecord = async (post_id, post_file) => {
   }
 };
 
-const deleteRecord = async (id_list, post_id) => {
+const deleteRecord = async (id, post_id) => {
   const db = await getDBClient();
   try {
-    const updateQuery = 'delete post_files where id not in($1) and post_id = $2';
-    const params = [id_list, post_id];
-    const result = await db.execute(updateQuery, params);
-    return result.rows;
+    const deleteQuery = 'delete from post_files where id =$1 and post_id = $2';
+    const params = [id, post_id];
+    await db.execute(deleteQuery, params);
   } catch (e) {
     console.log(e);
-    Record;
     throw e;
   } finally {
     await db.release();
