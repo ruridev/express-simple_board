@@ -46,10 +46,13 @@ router.get('/:id', async function(req, res, next) {
   const post = await postModel.get({ id: req.params.id });
   if (post == undefined) return res.render('404');
 
+  const parent_post = await postModel.get({ id: post.parent_id });
+  if (parent_post) post.parent_post = parent_post;
+
   const comments = await commentModel.list({ post_id: post.id });
   const postFiles = await postFileModel.list({ post_id: post.id });
 
-  res.status(200).render('posts/view', { post, comments, postFiles });
+  res.status(200).render('posts/view', { post, parent_post, comments, postFiles });
 });
 
 router.post('/', upload.any(), postModel.insertValidation, async function(req, res, next) {
@@ -198,8 +201,8 @@ router.get('/:id/delete', function(req, res, next) {
 });
 
 router.get('/:id/reply', async function(req, res, next) {
-  if (parent_post == undefined) res.render('404');
   const parent_post = await postModel.get({ id: req.params.id });
+  if (parent_post == undefined) res.render('404');
 
   res.status(200).render('posts/form', {
     post: null,

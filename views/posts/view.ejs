@@ -4,6 +4,13 @@
   <body>
     <a href="/posts">리스트로 돌아가기</a>
     <table border="1" width="100%">
+      <% if(post.parent_post ) {%>
+      <tr>
+        <td colspan="2">
+          ↑ <a href="/posts/<%= post.parent_post.id%>"><%= post.parent_post.title %></a>
+        </td>
+      </tr>
+      <% } %>
       <tr>
         <td colspan="2"><%= post.id %>. <%= post.title %></td>
       </tr>
