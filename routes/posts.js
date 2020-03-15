@@ -44,15 +44,17 @@ router.get('/new', function(req, res, next) {
 
 router.get('/:id', async function(req, res, next) {
   const post = await postModel.get({ id: req.params.id });
-  if (post == undefined) return res.render('404');
+  if (post === undefined) return res.render('404');
 
-  const parent_post = await postModel.get({ id: post.parent_id });
-  if (parent_post) post.parent_post = parent_post;
+  if (post.parent_id) {
+    const parent_post = await postModel.get({ id: post.parent_id });
+    if (parent_post) post.parent_post = parent_post;
+  }
 
   const comments = await commentModel.list({ post_id: post.id });
   const postFiles = await postFileModel.list({ post_id: post.id });
 
-  res.status(200).render('posts/view', { post, parent_post, comments, postFiles });
+  res.status(200).render('posts/view', { post, comments, postFiles });
 });
 
 router.post('/', upload.any(), postModel.insertValidation, async function(req, res, next) {
@@ -107,17 +109,14 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
   if (!errors.isEmpty()) return res.render('422');
 
   const post = await postModel.get({ id: req.params.id });
-  if (post == undefined) return res.render('404');
+  if (post === undefined) return res.render('404');
+  if (post.encrypted_password != md5(req.body.password)) return res.render('400');
 
   const requested_at = new Date();
 
   const transaction = await getDBClient();
   try {
     await transaction.begin();
-
-    if (post.encrypted_password != md5(req.body.password)) {
-      return res.render('400');
-    }
 
     if (req.body.delete_files) {
       const arry =
@@ -161,7 +160,7 @@ router.post('/:id', upload.any(), postModel.updateValidation, async function(req
 
 router.post('/:id/delete', async function(req, res, next) {
   const post = await postModel.get({ id: req.params.id });
-  if (post == undefined) return res.render('404');
+  if (post === undefined) return res.render('404');
   if (post.encrypted_password != md5(req.body.password)) return res.render('400');
 
   const requestd_at = new Date();
@@ -183,7 +182,7 @@ router.post('/:id/delete', async function(req, res, next) {
 
 router.get('/:id/edit', async function(req, res, next) {
   const post = await postModel.get({ id: req.params.id });
-  if (post == undefined) return res.render('404');
+  if (post === undefined) return res.render('404');
 
   const postFiles = await postFileModel.list({ post_id: req.params.id });
 
@@ -202,7 +201,7 @@ router.get('/:id/delete', function(req, res, next) {
 
 router.get('/:id/reply', async function(req, res, next) {
   const parent_post = await postModel.get({ id: req.params.id });
-  if (parent_post == undefined) res.render('404');
+  if (parent_post === undefined) res.render('404');
 
   res.status(200).render('posts/form', {
     post: null,
@@ -217,7 +216,7 @@ router.post('/:id/comments', commentModel.insertValidation, async function(req, 
   const requested_at = new Date();
 
   const post = await postModel.get({ id: req.params.id });
-  if (post == undefined) return res.render('404');
+  if (post === undefined) return res.render('404');
 
   const comment = {
     post_id: req.params.id,
